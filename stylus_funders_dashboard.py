@@ -5,25 +5,103 @@ from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 import plotly.express as px
 import networkx as nx
+from PIL import Image
 
 # Set page configuration
 st.set_page_config(
-    page_title="Stylus Funders Dashboard",
+    page_title="Stylus Sprint Ecosystem Dashboard",
     page_icon="📊",
     layout="wide"
 )
 
+# Display banner image
+# banner_image = Image.open('./images/banner.jpg')
+#col1, col2, col3 = st.columns([1, 2, 1])
+#with col2:
+#    st.image(banner_image)
+
 # Main title
-st.title("📊 Stylus Funders Dashboard")
+st.title("📊 Stylus Sprint Ecosystem Dashboard")
+st.caption("Powered by [Open Source Observer](https://opensource.observer)")
+
+st.info("""
+🚧 **Under Review**  
+The data and visualizations presented here are currently undergoing an audit for completeness and accuracy. Some metrics or project listings may be updated as part of this review.  
+We welcome feedback and appreciate your patience as we refine the insights.
+""")
+
 
 # Create tabs
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab0, tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "Overview",
     "Developer Ecosystem Health",
     "Stylus Sprint Activity Analysis",
     "Project Deep Dive",
     "Risk Assessment",
     "Network Analysis"
 ])
+
+# Tab 0: Projects in Scope
+with tab0:
+    st.header("Overview")
+    st.markdown("""
+    Welcome to the **Stylus Sprint Ecosystem Dashboard**, a data-driven exploration of developer activity, project engagement, and network effects from the [Arbitrum Stylus Sprint](https://blog.arbitrum.io/stylus-sprint/) grant program.
+
+    Launched by the Arbitrum DAO, Stylus Sprint is a 5 million ARB initiative supporting projects building with Stylus — a new WASM-based virtual machine that lets developers write smart contracts in Rust, C, C++, and other WebAssembly-compatible languages.
+
+    This dashboard helps you:
+    - 📋 **Overview**: Explore who's building what in the Stylus Sprint and where to dig deeper.
+    - 👩‍💻 **Developer Ecosystem Health**: Uncover how developer activity is shaping the future of Stylus and Arbitrum.
+    - 📈 **Stylus Sprint Activity Analysis**: Dive into engagement trends and surface signals of momentum across projects.
+    - 🔍 **Project Deep Dive**: Zoom in on any project to decode its development velocity and community dynamics.
+    - ⚠️ **Risk Assessment**: Spot early warning signs in project health.
+    - 🕸️ **Network Analysis**: Trace the growing influence of Stylus through a web of SDK dependencies.
+
+    Use the tabs above to explore different dimensions of the ecosystem and uncover insights into the health and momentum of Stylus-powered innovation.
+    """)
+
+    st.markdown("""
+    This section lists all projects that are part of the Stylus Sprint program analysis.
+    """)
+    st.caption("To update your project's GitHub repositories, package links (e.g., NPM, Crates), or contract deployments in the OSS Directory, please follow the instructions outlined in [this](https://docs.google.com/document/d/1bOjjHiaY-8bx5d_Bwce4ePDYq3H7W8r_3Wq0dJCyLoA/edit?tab=t.0) document.")
+    
+    # Read the data files
+    project_orgs = pd.read_csv('./data/project_orgs.csv')
+    project_applications = pd.read_csv('./data/project_applications.csv')
+    
+    # Merge the dataframes
+    projects_df = pd.merge(
+        project_applications,
+        project_orgs,
+        on='project_name',
+        how='left'
+    )
+    
+    # Select and rename columns
+    projects_df = projects_df[['questbook_title', 'org', 'questbook_link', 'ossd_link']]
+    
+
+    # Add GitHub URL prefix to org
+    projects_df['org'] = 'https://github.com/' + projects_df['org']
+
+    # Sort by project title
+    projects_df = projects_df.sort_values('questbook_title', key=lambda x: x.str.lower())
+    
+    # Display the table
+    st.dataframe(
+        projects_df,
+        column_config={
+            "questbook_title": "Project Title",
+            "questbook_link": st.column_config.LinkColumn("Questbook Link", display_text="Open Questbook Application"),
+            "org": st.column_config.LinkColumn("GitHub Organization"),
+            "ossd_link": st.column_config.LinkColumn("OSS Directory Link", display_text="Open Project YAML File")
+        },
+        hide_index=True,
+        use_container_width=False,
+        width=2000,
+        height=900
+
+    )
 
 # Tab 1: Ecosystem Development Activity
 with tab1:
@@ -56,9 +134,9 @@ with tab1:
     }
     
     # Read and process data from all three sources
-    arb_df = pd.read_csv('arb_projects_active_dev_monthly.csv')
-    stylus_df = pd.read_csv('stylus_github_metrics.csv')
-    deps_df = pd.read_csv('stylus_dependencies_active_dev_monthly.csv')
+    arb_df = pd.read_csv('./data/arb_projects_active_dev_monthly.csv')
+    stylus_df = pd.read_csv('./data/stylus_github_metrics.csv')
+    deps_df = pd.read_csv('./data/stylus_dependencies_active_dev_monthly.csv')
     
     # Convert date columns to datetime
     for df in [arb_df, stylus_df, deps_df]:
@@ -298,25 +376,6 @@ with tab1:
     stylus_projects = calculate_project_metrics(stylus_df)
     deps_projects = calculate_project_metrics(deps_df)
 
-    # Add automated insights section
-    st.markdown("#### Key Insights")
-    
-    # Get top growing projects
-    top_stylus_growth = get_top_growth_projects(stylus_projects)
-    # Get list of Stylus Sprint projects to exclude
-    stylus_projects_list = stylus_projects['Project'].tolist() if stylus_projects is not None else []
-    top_deps_growth = get_top_growth_projects(deps_projects, exclude_projects=stylus_projects_list)
-    
-    # Display insights
-    if top_stylus_growth:
-        st.markdown("**Stylus Sprint Growth Leaders:** The following Stylus Sprint projects have seen the highest percentage growth in active developers in this time period")
-        for project, growth in top_stylus_growth:
-            st.markdown(f"- **{project}**: {growth:.1f}% ")
-    
-    if top_deps_growth:
-        st.markdown("**Top Growing Stylus SDK Dependents (Non-Grant Projects):** The following Stylus SDK dependents have seen the highest percentage growth in active developers in this time period")
-        for project, growth in top_deps_growth:
-            st.markdown(f"- **{project}**: {growth:.1f}% ")
 
     col1, col2, col3 = st.columns(3)
 
@@ -355,8 +414,6 @@ with tab1:
             st.write("No data available")
 
    
-    
-    
 
 # Tab 2: Overview
 with tab2:
@@ -392,7 +449,7 @@ with tab2:
     }
 
     # Read file
-    df = pd.read_csv('stylus_github_metrics.csv')
+    df = pd.read_csv('./data/stylus_github_metrics.csv')
     
     # Convert date column to datetime
     df['Date'] = pd.to_datetime(df['Date'])
@@ -459,6 +516,10 @@ with tab2:
     # Display the figure
     st.plotly_chart(fig, use_container_width=True)
     st.header(f"Project Activity Analysis ({time_window})")
+
+    st.warning("""
+    **Note:** Development metrics like commits, issues closed, and PRs merged can vary widely based on a project's workflow, team size, or codebase structure. These numbers aren’t meant for head-to-head comparisons, but rather to track changes within the same project over time. Use them as directional signals to guide deeper, qualitative evaluation.
+    """)
     
     # Metric selection with radio buttons
     available_metrics = {
@@ -640,6 +701,10 @@ with tab4:
     ### Project Health Indicators
     This dashboard tracks key metrics that serve as early warning indicators for project health.
     Alerts are triggered when metrics show concerning trends over the last 3 months.
+    """)
+
+    st.warning("""
+    ⚠️ This early warning system is an evolving tool designed to help identify projects that may need support. The intent is not to label risks prematurely, but to determine meaningful, configurable triggers over time — enabling the grants team to step in with timely guidance and assistance when it matters most.
     """)
     
     # Add configuration panel
@@ -845,7 +910,7 @@ with tab5:
     This analysis tracks the network of dependencies for projects using the Stylus SDK for Rust. By examining package relationships and ownership patterns, we can understand how the Stylus ecosystem is growing and evolving. 
     """)
 
-    dependency_df = pd.read_csv('stylus-sdk-rs-dependencies.csv')
+    dependency_df = pd.read_csv('./data/stylus-sdk-rs-dependencies.csv')
     
     # Add filter for number of top package owners
     top_n = st.slider(
