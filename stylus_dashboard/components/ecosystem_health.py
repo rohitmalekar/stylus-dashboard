@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import plotly.graph_objects as go
 from ..config import DATA_PATHS, TIME_WINDOWS
 from ..utils.data_processing import load_data, filter_data_by_time_window, calculate_pct_change, calculate_project_metrics
 from ..utils.visualization import create_developer_trend_plot
