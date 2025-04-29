@@ -44,7 +44,6 @@ stylus/
 ├── data/               # Data files and resources
 ├── images/            # Image assets
 ├── scripts/           # Utility scripts
-├── archive/           # Archived files
 ├── requirements.txt   # Project dependencies
 └── stylus_funders_dashboard.py  # Main dashboard application
 ```
