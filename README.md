@@ -23,7 +23,7 @@ pip install -r requirements.txt
 
 1. Run the Streamlit app:
 ```bash
-streamlit run stylus_funders_dashboard.py
+streamlit run run_dashboard.py
 ```
 
 2. Open your web browser and navigate to the provided local URL (typically http://localhost:8501)
@@ -44,8 +44,13 @@ stylus/
 ├── data/               # Data files and resources
 ├── images/            # Image assets
 ├── scripts/           # Utility scripts
+├── stylus_dashboard/  # Dashboard application package
+│   ├── components/    # Reusable dashboard components
+│   ├── utils/        # Utility functions
+│   ├── main.py       # Main dashboard application
+│   └── config.py     # Configuration settings
 ├── requirements.txt   # Project dependencies
-└── stylus_funders_dashboard.py  # Main dashboard application
+└── run_dashboard.py   # Dashboard entry point
 ```
 
 Powered by [Open Source Observer](https://opensource.observer)
