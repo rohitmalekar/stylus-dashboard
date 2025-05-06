@@ -37,10 +37,10 @@ def render_overview():
     )
     
     # Select and rename columns
-    projects_df = projects_df[['questbook_title', 'org', 'questbook_link', 'ossd_link']]
+    projects_df = projects_df[['questbook_title', 'artifact_namespace', 'questbook_link', 'ossd_link']]
     
     # Add GitHub URL prefix to org
-    projects_df['org'] = 'https://github.com/' + projects_df['org']
+    projects_df['artifact_namespace'] = 'https://github.com/' + projects_df['artifact_namespace']
     
     # Sort by project title
     projects_df = projects_df.sort_values('questbook_title', key=lambda x: x.str.lower())
@@ -51,7 +51,7 @@ def render_overview():
         column_config={
             "questbook_title": "Project Title",
             "questbook_link": st.column_config.LinkColumn("Questbook Link", display_text="Open Questbook Application"),
-            "org": st.column_config.LinkColumn("GitHub Organization"),
+            "artifact_namespace": st.column_config.LinkColumn("GitHub Organization"),
             "ossd_link": st.column_config.LinkColumn("OSS Directory Link", display_text="Open Project YAML File")
         },
         hide_index=True,

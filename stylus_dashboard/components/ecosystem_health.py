@@ -24,7 +24,7 @@ def render_ecosystem_health():
         "Select Time Window",
         options=list(TIME_WINDOWS.keys()),
         horizontal=True,
-        index=1  # Default to 6 months
+        index=4  # Default to 36 months
     )
     
     # Load data from all three sources
@@ -34,22 +34,22 @@ def render_ecosystem_health():
     
     # Filter data for active developers metric and selected time window
     arb_df = filter_data_by_time_window(
-        arb_df[arb_df['Metric'] == 'GITHUB_active_developers_monthly'],
+        arb_df[arb_df['metric_name'] == 'GITHUB_active_developers_monthly'],
         time_window
     )
     stylus_df = filter_data_by_time_window(
-        stylus_df[stylus_df['Metric'] == 'GITHUB_active_developers_monthly'],
+        stylus_df[stylus_df['metric_name'] == 'GITHUB_active_developers_monthly'],
         time_window
     )
     deps_df = filter_data_by_time_window(
-        deps_df[deps_df['Metric'] == 'GITHUB_active_developers_monthly'],
+        deps_df[deps_df['metric_name'] == 'GITHUB_active_developers_monthly'],
         time_window
     )
     
     # Aggregate data by date for each context
-    arb_agg = arb_df.groupby('Date')['Value'].sum().reset_index()
-    stylus_agg = stylus_df.groupby('Date')['Value'].sum().reset_index()
-    deps_agg = deps_df.groupby('Date')['Value'].sum().reset_index()
+    arb_agg = arb_df.groupby('sample_date')['amount'].sum().reset_index()
+    stylus_agg = stylus_df.groupby('sample_date')['amount'].sum().reset_index()
+    deps_agg = deps_df.groupby('sample_date')['amount'].sum().reset_index()
     
     # Calculate percentage changes
     arb_agg = calculate_pct_change(arb_agg)
@@ -64,7 +64,7 @@ def render_ecosystem_health():
         if not arb_agg.empty:
             st.metric(
                 "Arbitrum Ecosystem",
-                f"{arb_agg['Value'].mean():.0f}",
+                f"{arb_agg['amount'].mean():.0f}",
                 f"{arb_agg['pct_change'].mean():.1f}%"
             )
         else:
@@ -74,7 +74,7 @@ def render_ecosystem_health():
         if not stylus_agg.empty:
             st.metric(
                 "Stylus Grantees",
-                f"{stylus_agg['Value'].mean():.0f}",
+                f"{stylus_agg['amount'].mean():.0f}",
                 f"{stylus_agg['pct_change'].mean():.1f}%"
             )
         else:
@@ -84,7 +84,7 @@ def render_ecosystem_health():
         if not deps_agg.empty:
             st.metric(
                 "Stylus SDK Dependents",
-                f"{deps_agg['Value'].mean():.0f}",
+                f"{deps_agg['amount'].mean():.0f}",
                 f"{deps_agg['pct_change'].mean():.1f}%"
             )
         else:
@@ -97,8 +97,8 @@ def render_ecosystem_health():
     
     # Add traces for each context
     fig.add_trace(go.Scatter(
-        x=arb_agg['Date'],
-        y=arb_agg['Value'],
+        x=arb_agg['sample_date'],
+        y=arb_agg['amount'],
         name='Arbitrum Ecosystem',
         line=dict(color='blue', width=2),
         hovertemplate='Date: %{x}<br>Developers: %{y}<br>MoM Change: %{customdata:.1f}%<extra></extra>',
@@ -106,8 +106,8 @@ def render_ecosystem_health():
     ))
     
     fig.add_trace(go.Scatter(
-        x=stylus_agg['Date'],
-        y=stylus_agg['Value'],
+        x=stylus_agg['sample_date'],
+        y=stylus_agg['amount'],
         name='Stylus Grantees',
         line=dict(color='green', width=2),
         hovertemplate='Date: %{x}<br>Developers: %{y}<br>MoM Change: %{customdata:.1f}%<extra></extra>',
@@ -115,8 +115,8 @@ def render_ecosystem_health():
     ))
     
     fig.add_trace(go.Scatter(
-        x=deps_agg['Date'],
-        y=deps_agg['Value'],
+        x=deps_agg['sample_date'],
+        y=deps_agg['amount'],
         name='Stylus SDK Dependents',
         line=dict(color='orange', width=2),
         hovertemplate='Date: %{x}<br>Developers: %{y}<br>MoM Change: %{customdata:.1f}%<extra></extra>',

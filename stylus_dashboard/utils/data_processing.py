@@ -5,26 +5,26 @@ from ..config import TIME_WINDOWS
 def load_data(file_path):
     """Load and process data from CSV file."""
     df = pd.read_csv(file_path)
-    if 'Date' in df.columns:
-        df['Date'] = pd.to_datetime(df['Date'])
+    if 'sample_date' in df.columns:
+        df['sample_date'] = pd.to_datetime(df['sample_date'])
     return df
 
 def filter_data_by_time_window(df, time_window):
     """Filter data based on selected time window."""
-    if df.empty or 'Date' not in df.columns:
+    if df.empty or 'sample_date' not in df.columns:
         return df
     
-    latest_date = df['Date'].max()
+    latest_date = df['sample_date'].max()
     time_ago = latest_date - timedelta(days=TIME_WINDOWS[time_window])
-    return df[df['Date'] >= time_ago]
+    return df[df['sample_date'] >= time_ago]
 
 def calculate_pct_change(df):
     """Calculate percentage change for a dataframe."""
     if df.empty:
         return df
     
-    df = df.sort_values('Date')
-    df['pct_change'] = df['Value'].pct_change() * 100
+    df = df.sort_values('sample_date')
+    df['pct_change'] = df['amount'].pct_change() * 100
     return df
 
 def calculate_project_metrics(df):
@@ -32,12 +32,12 @@ def calculate_project_metrics(df):
     if df.empty:
         return None
     
-    project_metrics = df.groupby('Name').agg({
-        'Value': ['mean', 'first', 'last']
+    project_metrics = df.groupby('display_name').agg({
+        'amount': ['mean', 'first', 'last']
     }).reset_index()
     
-    project_metrics['pct_change'] = ((project_metrics[('Value', 'last')] - project_metrics[('Value', 'first')]) / 
-                                   project_metrics[('Value', 'first')] * 100)
+    project_metrics['pct_change'] = ((project_metrics[('amount', 'last')] - project_metrics[('amount', 'first')]) / 
+                                   project_metrics[('amount', 'first')] * 100)
     
     project_metrics.columns = ['Project', 'Avg Devs/Month', 'First Month', 'Last Month', 'Monthly Growth %']
     project_metrics = project_metrics[['Project', 'Avg Devs/Month', 'Monthly Growth %']]

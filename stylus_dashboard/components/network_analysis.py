@@ -15,6 +15,9 @@ def render_network_analysis():
     # Load dependency data
     dependency_df = load_data(DATA_PATHS["sdk_dependencies"])
     
+    # Filter out internal dependencies (where package owner is same as seed repo owner)
+    dependency_df = dependency_df[dependency_df['package_repo_owner'] != dependency_df['seed_repo_owner']]
+    
     # Add filter for number of top package owners
     top_n = st.slider(
         "Number of Top Package Owners to Show",
