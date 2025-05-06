@@ -12,7 +12,8 @@ TIME_WINDOWS = {
     "Last 3 Months": 90,
     "Last 6 Months": 180,
     "Last 9 Months": 270,
-    "Last 12 Months": 365
+    "Last 12 Months": 365,
+    "Last 36 Months": 1095
 }
 
 # Available metrics for analysis
@@ -40,5 +41,7 @@ DATA_PATHS = {
     "arb_projects": "./data/arb_projects_active_dev_monthly.csv",
     "stylus_metrics": "./data/stylus_github_metrics.csv",
     "dependencies": "./data/stylus_dependencies_active_dev_monthly.csv",
-    "sdk_dependencies": "./data/stylus-sdk-rs-dependencies.csv"
+    "sdk_dependencies": "./data/stylus-sdk-rs-dependencies.csv",
+    "active_devs_by_repo": "./data/stylus_github_metrics_repo.csv",
+    "downstream_dependencies": "./data/project_dependencies.csv"
 } 

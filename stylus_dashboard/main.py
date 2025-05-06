@@ -28,12 +28,12 @@ def main():
     """)
 
     # Create tabs
-    tab0, tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab0, tab1, tab2, tab3, tab5 = st.tabs([
         "Overview",
         "Developer Ecosystem Health",
         "Stylus Sprint Activity Analysis",
         "Project Deep Dive",
-        "Risk Assessment",
+        #"Risk Assessment",
         "Network Analysis"
     ])
 
@@ -50,8 +50,9 @@ def main():
     with tab3:
         render_project_deep_dive()
 
-    with tab4:
-        render_risk_assessment()
+    # Risk Assessment is disabled for now
+    #with tab4:
+    #    render_risk_assessment()
 
     with tab5:
         render_network_analysis()

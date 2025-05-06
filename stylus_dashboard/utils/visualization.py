@@ -7,8 +7,8 @@ def create_developer_trend_plot(df, title="Monthly Active Developers Trend"):
     fig = go.Figure()
     
     fig.add_trace(go.Scatter(
-        x=df['Date'],
-        y=df['Value'],
+        x=df['sample_date'],
+        y=df['amount'],
         name='Active Developers',
         line=dict(color='blue', width=2),
         hovertemplate='Date: %{x}<br>Developers: %{y}<br>MoM Change: %{customdata:.1f}%<extra></extra>',
@@ -22,8 +22,8 @@ def create_developer_trend_plot(df, title="Monthly Active Developers Trend"):
             pct_color = 'green' if row['pct_change'] > 0 else 'red' if row['pct_change'] < 0 else 'gray'
             
             fig.add_annotation(
-                x=row['Date'],
-                y=row['Value'],
+                x=row['sample_date'],
+                y=row['amount'],
                 text=pct_text,
                 showarrow=False,
                 font=dict(color=pct_color, size=10),
@@ -45,9 +45,9 @@ def create_activity_heatmap(df, metric_name):
     """Create a heatmap for project activity."""
     # Pivot data for heatmap
     heatmap_pivot = df.pivot(
-        index='Name',
-        columns='Date',
-        values='Value'
+        index='display_name',
+        columns='sample_date',
+        values='amount'
     )
     
     # Create heatmap

@@ -70,11 +70,11 @@ def render_risk_assessment():
     df = load_data(DATA_PATHS["stylus_metrics"])
     
     # Calculate date 120 days ago for trend analysis
-    latest_date = df['Date'].max()
+    latest_date = df['sample_date'].max()
     days_ago = latest_date - timedelta(days=120)
     
     # Project selection
-    all_projects = df['Name'].unique()
+    all_projects = df['display_name'].unique()
     selected_project = st.selectbox(
         "Select Project for Risk Assessment",
         all_projects
@@ -82,8 +82,8 @@ def render_risk_assessment():
     
     # Filter data for selected project and last 90 days
     project_data = df[
-        (df['Name'] == selected_project) &
-        (df['Date'] >= days_ago)
+        (df['display_name'] == selected_project) &
+        (df['sample_date'] >= days_ago)
     ]
     
     # Create columns for metrics
@@ -93,10 +93,10 @@ def render_risk_assessment():
         st.subheader("Contributor Engagement")
         
         # Active developers trend
-        active_devs = project_data[project_data['Metric'] == 'GITHUB_active_developers_monthly']
+        active_devs = project_data[project_data['metric_name'] == 'GITHUB_active_developers_monthly']
         if not active_devs.empty:
             # Calculate trend
-            trend = active_devs['Value'].pct_change().mean() * 100
+            trend = active_devs['amount'].pct_change().mean() * 100
             
             # Create trend indicator
             if trend < -active_devs_threshold:
@@ -107,17 +107,17 @@ def render_risk_assessment():
             # Plot trend
             fig = px.bar(
                 active_devs,
-                x='Date',
-                y='Value',
+                x='sample_date',
+                y='amount',
                 title='Active Developers Trend'
             )
             st.plotly_chart(fig, use_container_width=True)
         
         # New contributor acquisition
-        new_contributors = project_data[project_data['Metric'] == 'GITHUB_new_contributors_monthly']
+        new_contributors = project_data[project_data['metric_name'] == 'GITHUB_new_contributors_monthly']
         if not new_contributors.empty:
             # Calculate trend
-            trend = new_contributors['Value'].pct_change().mean() * 100
+            trend = new_contributors['amount'].pct_change().mean() * 100
             
             # Create trend indicator
             if trend < -new_contributors_threshold:
@@ -128,8 +128,8 @@ def render_risk_assessment():
             # Plot trend
             fig = px.bar(
                 new_contributors,
-                x='Date',
-                y='Value',
+                x='sample_date',
+                y='amount',
                 title='New Contributors Trend'
             )
             st.plotly_chart(fig, use_container_width=True)
@@ -138,10 +138,10 @@ def render_risk_assessment():
         st.subheader("Development Efficiency")
         
         # PR merge time
-        pr_merge_time = project_data[project_data['Metric'] == 'GITHUB_avg_prs_time_to_merge_quarterly']
+        pr_merge_time = project_data[project_data['metric_name'] == 'GITHUB_avg_prs_time_to_merge_quarterly']
         if not pr_merge_time.empty:
             # Calculate trend
-            trend = pr_merge_time['Value'].pct_change().mean() * 100
+            trend = pr_merge_time['amount'].pct_change().mean() * 100
             
             # Create trend indicator
             if trend > pr_merge_time_threshold:
@@ -152,19 +152,19 @@ def render_risk_assessment():
             # Plot trend
             fig = px.line(
                 pr_merge_time,
-                x='Date',
-                y='Value',
+                x='sample_date',
+                y='amount',
                 title='PR Merge Time Trend'
             )
             st.plotly_chart(fig, use_container_width=True)
         
         # Issue backlog
-        opened_issues = project_data[project_data['Metric'] == 'GITHUB_opened_issues_monthly']
-        closed_issues = project_data[project_data['Metric'] == 'GITHUB_closed_issues_monthly']
+        opened_issues = project_data[project_data['metric_name'] == 'GITHUB_opened_issues_monthly']
+        closed_issues = project_data[project_data['metric_name'] == 'GITHUB_closed_issues_monthly']
         
         if not opened_issues.empty and not closed_issues.empty:
             # Calculate backlog ratio
-            backlog_ratio = opened_issues['Value'].sum() / closed_issues['Value'].sum()
+            backlog_ratio = opened_issues['amount'].sum() / closed_issues['amount'].sum()
             
             # Create trend indicator
             if backlog_ratio > issue_backlog_threshold:
@@ -175,13 +175,13 @@ def render_risk_assessment():
             # Plot comparison
             fig = go.Figure()
             fig.add_trace(go.Bar(
-                x=opened_issues['Date'],
-                y=opened_issues['Value'],
+                x=opened_issues['sample_date'],
+                y=opened_issues['amount'],
                 name='Opened Issues'
             ))
             fig.add_trace(go.Bar(
-                x=closed_issues['Date'],
-                y=closed_issues['Value'],
+                x=closed_issues['sample_date'],
+                y=closed_issues['amount'],
                 name='Closed Issues'
             ))
             fig.update_layout(
