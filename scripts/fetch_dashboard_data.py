@@ -93,7 +93,7 @@ def fetch_dependencies_by_project(client):
 
     # First, get projects dependent on grantees in Stylus Sprint and then get no. of active developers for each project.
     query = f"""
-    WITH sbom_links AS (
+    -- WITH sbom_links AS (
         SELECT distinct
             sboms.from_artifact_namespace,
             sboms.from_artifact_name,
@@ -107,30 +107,30 @@ def fetch_dependencies_by_project(client):
             ON sboms.to_package_artifact_name = po.package_artifact_name
             AND sboms.to_package_artifact_source = po.package_artifact_source
         WHERE pc.collection_name = 'arb-stylus'
-    )
+    -- )
 
-    SELECT  
-        ap.artifact_name,
-        ap.project_name,
-        m.metric_name,
-        ts.sample_date,
-        ts.amount,
-        sb.from_artifact_namespace,
-        sb.from_artifact_name,
-        sb.to_package_artifact_name,
-        sb.to_package_artifact_source,
-        sb.package_owner_artifact_namespace
-    FROM sbom_links sb
-    JOIN artifacts_by_project_v1 ap
-        ON sb.from_artifact_namespace = ap.artifact_namespace
-        AND sb.from_artifact_name = ap.artifact_name
-    JOIN timeseries_metrics_by_artifact_v0 ts
-        ON ts.artifact_id = ap.artifact_id
-    JOIN metrics_v0 m
-        ON m.metric_id = ts.metric_id
-    WHERE ap.artifact_source = 'GITHUB'
-      AND m.metric_name = 'GITHUB_active_developers_monthly'
-      AND ts.sample_date BETWEEN DATE '{first_day_of_prev_month}' AND DATE '{last_day_of_prev_month}'
+    --SELECT  
+    --    ap.artifact_name,
+    --    ap.project_name,
+    --    m.metric_name,
+    --    ts.sample_date,
+    --    ts.amount,
+    --    sb.from_artifact_namespace,
+    --    sb.from_artifact_name,
+    --    sb.to_package_artifact_name,
+    --    sb.to_package_artifact_source,
+    --    sb.package_owner_artifact_namespace
+    --FROM sbom_links sb
+    --LEFT JOIN artifacts_by_project_v1 ap
+    --    ON sb.from_artifact_namespace = ap.artifact_namespace
+    --    AND sb.from_artifact_name = ap.artifact_name
+    --LEFT JOIN timeseries_metrics_by_artifact_v0 ts
+    --    ON ts.artifact_id = ap.artifact_id
+    --LEFT JOIN metrics_v0 m
+    --    ON m.metric_id = ts.metric_id
+    -- WHERE (ap.artifact_source = 'GITHUB' OR ap.artifact_source IS NULL)
+    --   AND (m.metric_name = 'GITHUB_active_developers_monthly' OR m.metric_name IS NULL)
+    --   AND (ts.sample_date BETWEEN DATE '{first_day_of_prev_month}' AND DATE '{last_day_of_prev_month}' OR ts.sample_date IS NULL)
     """
     return client.to_pandas(query)
 
@@ -218,17 +218,17 @@ def main():
     os.makedirs('data', exist_ok=True)
 
     # Fetch and save all data
-    print("Fetching Org Level GitHub metrics...")
-    github_metrics = fetch_github_metrics(client)
-    github_metrics.to_csv('./data/stylus_github_metrics.csv', index=False)
+    #print("Fetching Org Level GitHub metrics...")
+    #github_metrics = fetch_github_metrics(client)
+    #github_metrics.to_csv('./data/stylus_github_metrics.csv', index=False)
    
-    print("Fetching Repo Level GitHub metrics...")
-    github_metrics_repo  = fetch_github_metrics_repo(client)
-    github_metrics_repo.to_csv('./data/stylus_github_metrics_repo.csv', index=False)
+    #print("Fetching Repo Level GitHub metrics...")
+    #github_metrics_repo  = fetch_github_metrics_repo(client)
+    #github_metrics_repo.to_csv('./data/stylus_github_metrics_repo.csv', index=False)
 
-    print("Fetching Stylus SDK dependencies...")
-    sdk_deps = fetch_sdk_dependencies(client)
-    sdk_deps.to_csv('./data/stylus-sdk-rs-dependencies.csv', index=False)
+    #print("Fetching Stylus SDK dependencies...")
+    #sdk_deps = fetch_sdk_dependencies(client)
+    #sdk_deps.to_csv('./data/stylus-sdk-rs-dependencies.csv', index=False)
 
     print("Fetching projects dependencies...")
     project_deps = fetch_dependencies_by_project(client)

@@ -7,22 +7,34 @@ from ..utils.visualization import create_developer_trend_plot, create_activity_h
 
 def create_grantee_impact_sankey(df):
     """Create a Sankey diagram showing the impact of Stylus Sprint grantees."""
+    
     # Filter out dependencies where source and dependent are from same org
     df = df[df['from_artifact_namespace'] != df['package_owner_artifact_namespace']]
+        
+    # Group by grantee, package, and dependent project to get dependency counts
+    impact_data = df.groupby(['package_owner_artifact_namespace', 'to_package_artifact_name', 'from_artifact_namespace', 'from_artifact_name']).size().reset_index(name='dependency_count')
     
-    # Group by grantee and dependent project to get dependency counts
-    impact_data = df.groupby(['package_owner_artifact_namespace', 'artifact_name']).size().reset_index(name='dependency_count')
-    
-    # Get unique grantees and dependent projects
+    # Get unique values for each step
     grantees = impact_data['package_owner_artifact_namespace'].unique()
-    dependents = impact_data['artifact_name'].unique()
+    packages = impact_data['to_package_artifact_name'].unique()
+    dependents = impact_data.apply(lambda x: f"{x['from_artifact_namespace']}/{x['from_artifact_name']}", axis=1).unique()
     
-    # Create node labels (combine grantees and dependents)
-    node_labels = list(grantees) + list(dependents)
+    # Create node labels (combine all three steps)
+    node_labels = list(grantees) + list(packages) + list(dependents)
     
-    # Create source and target indices
-    source_indices = [list(grantees).index(grantee) for grantee in impact_data['package_owner_artifact_namespace']]
-    target_indices = [len(grantees) + list(dependents).index(dep) for dep in impact_data['artifact_name']]
+    # Create source and target indices for first step (grantees to packages)
+    source_indices_step1 = [list(grantees).index(grantee) for grantee in impact_data['package_owner_artifact_namespace']]
+    target_indices_step1 = [len(grantees) + list(packages).index(pkg) for pkg in impact_data['to_package_artifact_name']]
+    
+    # Create source and target indices for second step (packages to dependents)
+    source_indices_step2 = [len(grantees) + list(packages).index(pkg) for pkg in impact_data['to_package_artifact_name']]
+    target_indices_step2 = [len(grantees) + len(packages) + list(dependents).index(f"{ns}/{name}") 
+                          for ns, name in zip(impact_data['from_artifact_namespace'], impact_data['from_artifact_name'])]
+    
+    # Combine the steps
+    source_indices = source_indices_step1 + source_indices_step2
+    target_indices = target_indices_step1 + target_indices_step2
+    values = list(impact_data['dependency_count']) * 2  # Duplicate values for both steps
     
     # Create the Sankey diagram
     fig = go.Figure(data=[go.Sankey(
@@ -31,12 +43,12 @@ def create_grantee_impact_sankey(df):
             thickness = 20,
             line = dict(color = "black", width = 0.5),
             label = node_labels,
-            color = ["#1f77b4"] * len(grantees) + ["#ff7f0e"] * len(dependents)  # Different colors for grantees vs dependents
+            color = ["#1f77b4"] * len(grantees) + ["#2ca02c"] * len(packages) + ["#ff7f0e"] * len(dependents)  # Different colors for each step
         ),
         link = dict(
             source = source_indices,
             target = target_indices,
-            value = impact_data['dependency_count'],
+            value = values,
             color = ["rgba(31, 119, 180, 0.4)"] * len(source_indices)  # Semi-transparent blue for flows
         )
     )])
@@ -45,7 +57,7 @@ def create_grantee_impact_sankey(df):
     fig.update_layout(
         title_text="Stylus Sprint Grantee Impact",
         font_size=10,
-        height=800
+        height=2000
     )
     
     return fig
@@ -173,21 +185,21 @@ def render_activity_analysis():
 
 
     # Add grantee impact visualization
-    #st.header("Stylus Sprint Grantee Impact")
-    #st.markdown("""
-    #This Sankey diagram shows how Stylus Sprint grantees' work is being used across the ecosystem:
-    #- Left side: Stylus Sprint grantees
-    #- Right side: Projects using grantee packages
-    #- Flow width: Number of dependencies
+    st.header("Stylus Sprint Grantee Impact")
+    st.markdown("""
+    This Sankey diagram shows how Stylus Sprint grantees' work is being used across the ecosystem:
+    - Left side: Stylus Sprint grantees
+    - Right side: Projects using grantee packages
+    - Flow width: Number of dependencies
     #- Color coding: Blue for grantees, Orange for dependent projects
-    #""")
+    """)
     
     # Load dependency data
-    #dependency_data = load_data(DATA_PATHS["downstream_dependencies"])
-    #dependency_data = filter_data_by_time_window(dependency_data, time_window)
+    dependency_data = load_data(DATA_PATHS["downstream_dependencies"])
+    dependency_data = filter_data_by_time_window(dependency_data, time_window)
     
     # Create and display the Sankey diagram
-    #fig = create_grantee_impact_sankey(dependency_data)
-    #st.plotly_chart(fig, use_container_width=True)
+    fig = create_grantee_impact_sankey(dependency_data)
+    st.plotly_chart(fig, use_container_width=True)
 
     
