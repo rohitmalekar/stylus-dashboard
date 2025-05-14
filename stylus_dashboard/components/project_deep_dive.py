@@ -13,6 +13,7 @@ def render_project_deep_dive():
     # Load data
     df = load_data(DATA_PATHS["stylus_metrics"])
     repo_devs_df = load_data(DATA_PATHS["active_devs_by_repo"])
+    project_attributes = pd.read_csv(DATA_PATHS["project_attributes"])
     
     # Project selection
     all_projects = df['display_name'].unique()
@@ -34,6 +35,30 @@ def render_project_deep_dive():
     # Get the project_name from project_data
     project_name = project_data['project_name'].iloc[0] if not project_data.empty else None
     
+    # Get project attributes
+    project_attr = project_attributes[project_attributes['project_name'] == project_name]
+    if not project_attr.empty:
+        st.subheader("Project Attributes")
+        
+        # Create columns for different attribute categories
+        attr_col1, attr_col2 = st.columns(2)
+        
+        with attr_col1:
+            st.markdown("**Onchain Status**")
+            st.info(project_attr['onchain_status'].iloc[0])
+            
+            st.markdown("**Stylus Usage**")
+            st.info(project_attr['stylus_usage'].iloc[0])
+        
+        with attr_col2:
+            st.markdown("**Origin**")
+            st.info(project_attr['origin'].iloc[0])
+            
+            st.markdown("**Categories**")
+            categories = [cat.strip() for cat in project_attr['categories'].iloc[0].split(',')]
+            for category in categories:
+                st.info(category)
+    
     # Filter repository-level data for selected project
     project_repo_data = repo_devs_df[
         (repo_devs_df['project_name'] == project_name) &
@@ -41,7 +66,6 @@ def render_project_deep_dive():
         (repo_devs_df['metric_name'] == 'GITHUB_active_developers_monthly')
     ]
 
-    
     # Create three columns for metrics
     col1, col2, col3 = st.columns(3)
     

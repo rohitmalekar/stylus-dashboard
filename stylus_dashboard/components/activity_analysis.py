@@ -64,6 +64,53 @@ def render_activity_analysis():
     - **Grantee Impact**: Visualize how Stylus Sprint grantees are being used across the ecosystem
     """)
     
+    # Load project attributes first
+    project_attributes = pd.read_csv(DATA_PATHS["project_attributes"])
+    
+    # Get unique values for each attribute type
+    onchain_statuses = sorted(project_attributes['onchain_status'].unique())
+    stylus_usages = sorted(project_attributes['stylus_usage'].unique())
+    origins = sorted(project_attributes['origin'].unique())
+    all_categories = sorted(list(set([cat.strip() for cats in project_attributes['categories'].str.split(',') for cat in cats])))
+    
+    # Create attribute filters
+    st.subheader("Filter by Project Attributes")
+    
+    # Create filter columns
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        selected_onchain = st.multiselect(
+            "Onchain Status",
+            options=onchain_statuses,
+            default=onchain_statuses
+        )
+        selected_stylus = st.multiselect(
+            "Stylus Usage",
+            options=stylus_usages,
+            default=stylus_usages
+        )
+    
+    with col2:
+        selected_origin = st.multiselect(
+            "Origin",
+            options=origins,
+            default=origins
+        )
+        selected_categories = st.multiselect(
+            "Categories",
+            options=all_categories,
+            default=all_categories
+        )
+    
+    # Filter projects based on selected attributes
+    filtered_projects = project_attributes[
+        project_attributes['onchain_status'].isin(selected_onchain) &
+        project_attributes['stylus_usage'].isin(selected_stylus) &
+        project_attributes['origin'].isin(selected_origin) &
+        project_attributes['categories'].apply(lambda x: any(cat in x for cat in selected_categories))
+    ]['project_name'].tolist()
+    
     # Add time window selector
     time_window = st.radio(
         "Select a time window to analyze developer activity trends and project metrics:",
@@ -81,6 +128,9 @@ def render_activity_analysis():
         df[df['metric_name'] == 'GITHUB_active_developers_monthly'],
         time_window
     )
+    
+    # Filter data by selected projects
+    df = df[df['project_name'].isin(filtered_projects)]
     
     # Aggregate data across all projects
     aggregated_df = df.groupby('sample_date')['amount'].sum().reset_index()
@@ -110,6 +160,9 @@ def render_activity_analysis():
         heatmap_data[heatmap_data['metric_name'] == selected_metric],
         time_window
     )
+    
+    # Filter heatmap data by selected projects
+    heatmap_data = heatmap_data[heatmap_data['project_name'].isin(filtered_projects)]
     
     # Aggregate data to handle duplicates
     heatmap_data = heatmap_data.groupby(['display_name', 'sample_date'])['amount'].sum().reset_index()
