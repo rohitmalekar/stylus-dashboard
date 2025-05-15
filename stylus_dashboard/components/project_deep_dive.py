@@ -9,6 +9,11 @@ from ..utils.data_processing import load_data
 def render_project_deep_dive():
     """Render the project deep dive analysis tab content."""
     st.header("Project Deep Dive Analysis")
+    st.markdown("""
+    This page provides a comprehensive analysis of individual projects, including development velocity metrics, 
+    community health indicators, and project growth statistics. Select a project to view detailed metrics 
+    such as commit frequency, contributor activity, and repository-level developer engagement.
+    """)
     
     # Load data
     df = load_data(DATA_PATHS["stylus_metrics"])
@@ -40,24 +45,25 @@ def render_project_deep_dive():
     if not project_attr.empty:
         st.subheader("Project Attributes")
         
-        # Create columns for different attribute categories
-        attr_col1, attr_col2 = st.columns(2)
+        # Create a more compact layout using badges
+        col1, col2, col3, col4 = st.columns(4)
         
-        with attr_col1:
-            st.markdown("**Onchain Status**")
-            st.info(project_attr['onchain_status'].iloc[0])
-            
-            st.markdown("**Stylus Usage**")
-            st.info(project_attr['stylus_usage'].iloc[0])
+        with col1:
+            st.markdown("**Onchain Status**", help="Does the project write to or read from the blockchain?")
+            st.markdown(f"`{project_attr['onchain_status'].iloc[0]}`")
         
-        with attr_col2:
-            st.markdown("**Origin**")
-            st.info(project_attr['origin'].iloc[0])
-            
-            st.markdown("**Categories**")
+        with col2:
+            st.markdown("**Stylus Usage**", help="Contract logic or computation on Stylus (Direct)")
+            st.markdown(f"`{project_attr['stylus_usage'].iloc[0]}`")
+        
+        with col3:
+            st.markdown("**Origin**", help="Project with working product on other chains expanding support to Stylus (Established) versus project was conceived specifically for Arbitrum Stylus (Stylus-Native)")
+            st.markdown(f"`{project_attr['origin'].iloc[0]}`")
+        
+        with col4:
+            st.markdown("**Categories**", help="Project Type / Primary Function")
             categories = [cat.strip() for cat in project_attr['categories'].iloc[0].split(',')]
-            for category in categories:
-                st.info(category)
+            st.markdown(" ".join([f"`{cat}`" for cat in categories]))
     
     # Filter repository-level data for selected project
     project_repo_data = repo_devs_df[
@@ -84,18 +90,16 @@ def render_project_deep_dive():
             fig.update_yaxes(range=[0, weekly_commits['amount'].max() * 1.1])
             st.plotly_chart(fig, use_container_width=True)
         
-        # PR merge time
-        pr_merge_time = project_data[project_data['metric_name'] == 'GITHUB_avg_prs_time_to_merge_quarterly']
-        if not pr_merge_time.empty:
+        # Weekly merged PRs
+        merged_prs = project_data[project_data['metric_name'] == 'GITHUB_merged_pull_requests_weekly']
+        if not merged_prs.empty:
             st.metric(
-                "Average PR Merge Time",
-                f"{pr_merge_time['amount'].iloc[-1]:.1f} days"
+                "Average Weekly Merged PRs",
+                f"{merged_prs['amount'].mean():.1f}"
             )
     
     with col2:
         st.subheader("Community Health")
-        
-        
         
         # New vs returning contributors
         new_contributors = project_data[project_data['metric_name'] == 'GITHUB_new_contributors_monthly']
@@ -174,6 +178,9 @@ def render_project_deep_dive():
         pivot_table = pivot_table.drop('total', axis=1)  # Remove the total column after sorting
         
         st.subheader("Monthly Active Developers by Repository")
+        st.markdown("""
+        This heatmap shows the number of active developers contributing to each repository over time. 
+        """)
         
         # Create heatmap
         fig = go.Figure(data=go.Heatmap(

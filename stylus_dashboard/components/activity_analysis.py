@@ -73,7 +73,6 @@ def render_activity_analysis():
     - **Developer Activity Trends**: Track the evolution of active developers over time
     - **Project Activity Heatmap**: Compare key metrics (commits, issues, PRs, etc.) across all projects
     - **Time-based Analysis**: Select different time windows to analyze patterns and growth
-    - **Grantee Impact**: Visualize how Stylus Sprint grantees are being used across the ecosystem
     """)
     
     # Load project attributes first
@@ -85,6 +84,15 @@ def render_activity_analysis():
     origins = sorted(project_attributes['origin'].unique())
     all_categories = sorted(list(set([cat.strip() for cats in project_attributes['categories'].str.split(',') for cat in cats])))
     
+    st.info("""
+    **Note:** The metrics on this page are measured at the GitHub organization level, not just the specific repositories involved in the Stylus Sprint. This means:
+    - For projects using a monorepo structure, all activity in that repository is included
+    - For projects with multiple repositories, activity across all repositories in their organization is included
+    - These metrics may include work unrelated to Stylus Sprint
+    
+    For repository-specific insights by project, please see the project deep dive section.
+    """)
+
     # Create attribute filters
     st.subheader("Filter by Project Attributes")
     
@@ -93,26 +101,30 @@ def render_activity_analysis():
     
     with col1:
         selected_onchain = st.multiselect(
-            "Onchain Status",
+            "Onchain Component",
             options=onchain_statuses,
-            default=onchain_statuses
+            default=onchain_statuses,
+            help="Does the project write to or read from the blockchain?"
         )
         selected_stylus = st.multiselect(
             "Stylus Usage",
             options=stylus_usages,
-            default=stylus_usages
+            default=stylus_usages,
+            help="Contract logic or computation on Stylus (Direct)"
         )
     
     with col2:
         selected_origin = st.multiselect(
             "Origin",
             options=origins,
-            default=origins
+            default=origins,
+            help="Project with working product on other chains expanding support to Stylus (Established) versus project was conceived specifically for Arbitrum Stylus (Stylus-Native)"
         )
         selected_categories = st.multiselect(
             "Categories",
             options=all_categories,
-            default=all_categories
+            default=all_categories,
+            help="Project Type / Primary Function"
         )
     
     # Filter projects based on selected attributes
@@ -122,6 +134,15 @@ def render_activity_analysis():
         project_attributes['origin'].isin(selected_origin) &
         project_attributes['categories'].apply(lambda x: any(cat in x for cat in selected_categories))
     ]['project_name'].tolist()
+    
+    # Display filtered projects
+    with st.expander(f"View {len(filtered_projects)} Projects in Scope"):
+        if filtered_projects:
+            st.write("The following projects match your selected filters:")
+            for project in sorted(filtered_projects):
+                st.write(f"- {project}")
+        else:
+            st.warning("No projects match the selected filters. Please adjust your filter criteria.")
     
     # Add time window selector
     time_window = st.radio(
@@ -152,7 +173,7 @@ def render_activity_analysis():
     fig = create_developer_trend_plot(aggregated_df)
     st.plotly_chart(fig, use_container_width=True)
 
-    st.header(f"Project Activity Analysis ({time_window})")
+    st.markdown(f"### Project Activity Analysis ({time_window})")
 
     st.warning("""
     **Note:** Development metrics like commits, issues closed, and PRs merged can vary widely based on a project's workflow, team size, or codebase structure. These numbers aren't meant for head-to-head comparisons, but rather to track changes within the same project over time. Use them as directional signals to guide deeper, qualitative evaluation.
@@ -181,25 +202,6 @@ def render_activity_analysis():
     
     # Create and display the heatmap
     fig = create_activity_heatmap(heatmap_data, AVAILABLE_METRICS[selected_metric])
-    st.plotly_chart(fig, use_container_width=True)
-
-
-    # Add grantee impact visualization
-    st.header("Stylus Sprint Grantee Impact")
-    st.markdown("""
-    This Sankey diagram shows how Stylus Sprint grantees' work is being used across the ecosystem:
-    - Left side: Stylus Sprint grantees
-    - Right side: Projects using grantee packages
-    - Flow width: Number of dependencies
-    #- Color coding: Blue for grantees, Orange for dependent projects
-    """)
-    
-    # Load dependency data
-    dependency_data = load_data(DATA_PATHS["downstream_dependencies"])
-    dependency_data = filter_data_by_time_window(dependency_data, time_window)
-    
-    # Create and display the Sankey diagram
-    fig = create_grantee_impact_sankey(dependency_data)
     st.plotly_chart(fig, use_container_width=True)
 
     
