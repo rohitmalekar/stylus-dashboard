@@ -189,6 +189,7 @@ def fetch_stylus_deps_active_devs(client):
         AND sboms.to_package_artifact_source = package_owners.package_artifact_source
       WHERE package_owners.package_owner_artifact_namespace = 'offchainlabs'
         AND package_owners.package_owner_artifact_name = 'stylus-sdk-rs'
+        AND sboms.from_artifact_namespace != 'offchainlabs'  -- Exclude dependencies within Offchain Labs
       )
        SELECT  distinct p.display_name as display_name,
                 m.metric_name as metric_name,
@@ -218,17 +219,17 @@ def main():
     os.makedirs('data', exist_ok=True)
 
     # Fetch and save all data
-    #print("Fetching Org Level GitHub metrics...")
-    #github_metrics = fetch_github_metrics(client)
-    #github_metrics.to_csv('./data/stylus_github_metrics.csv', index=False)
+    print("Fetching Org Level GitHub metrics...")
+    github_metrics = fetch_github_metrics(client)
+    github_metrics.to_csv('./data/stylus_github_metrics.csv', index=False)
    
-    #print("Fetching Repo Level GitHub metrics...")
-    #github_metrics_repo  = fetch_github_metrics_repo(client)
-    #github_metrics_repo.to_csv('./data/stylus_github_metrics_repo.csv', index=False)
+    print("Fetching Repo Level GitHub metrics...")
+    github_metrics_repo  = fetch_github_metrics_repo(client)
+    github_metrics_repo.to_csv('./data/stylus_github_metrics_repo.csv', index=False)
 
-    #print("Fetching Stylus SDK dependencies...")
-    #sdk_deps = fetch_sdk_dependencies(client)
-    #sdk_deps.to_csv('./data/stylus-sdk-rs-dependencies.csv', index=False)
+    print("Fetching Stylus SDK dependencies...")
+    sdk_deps = fetch_sdk_dependencies(client)
+    sdk_deps.to_csv('./data/stylus-sdk-rs-dependencies.csv', index=False)
 
     print("Fetching projects dependencies...")
     project_deps = fetch_dependencies_by_project(client)
