@@ -22,12 +22,6 @@ def main():
     st.title("📊 Stylus Sprint Ecosystem Dashboard")
     st.caption("Powered by [Open Source Observer](https://opensource.observer)")
 
-    st.info("""
-    🚧 **Under Review**  
-    The data and visualizations presented here are currently undergoing an audit for completeness and accuracy. Some metrics or project listings may be updated as part of this review.  
-    We welcome feedback and appreciate your patience as we refine the insights.
-    """)
-
     # Create tabs
     tab0, tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "Overview",
